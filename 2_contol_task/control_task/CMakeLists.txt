@@ -5,4 +5,5 @@
 cmake_minimum_required(VERSION 3.16)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+# include(${SOURCE_DIR}/component/lcd_hal/LCD.h)
 project(control_task)
