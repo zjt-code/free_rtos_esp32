@@ -88,7 +88,7 @@ void app_main(void)
     LCD_Clear(YELLOW);
 
    // LCD_ShowChar(0,16,'A',16,1);
-    Show_Str(0,0,(u8 *)"@jtNight14",16,1);
+   // Show_Str(0,0,(u8 *)"@jtNight14",16,1);
 
     u16 lcd_id = LCD_Read_ID(0x04);
     u8  buf[16] = {0};
