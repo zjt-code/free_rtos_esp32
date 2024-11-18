@@ -489,7 +489,7 @@ void app_main(void)
     /* Start the server for the first time */
     server = start_webserver();
 
-    while (server) {
+    while (1) {
         sleep(5);
         printf("main loop-----\r\n");
     }
