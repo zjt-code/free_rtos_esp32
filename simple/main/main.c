@@ -23,6 +23,8 @@
 #include "esp_tls.h"
 #include "esp_check.h"
 
+#include "lcd.h"
+
 #if !CONFIG_IDF_TARGET_LINUX
 #include <esp_wifi.h>
 #include <esp_system.h>
@@ -235,6 +237,8 @@ static esp_err_t hello_get_handler(httpd_req_t *req)
         free(buf);
     }
 
+      Show_Str(0,96,(u8 *)"/hello GET",16,0);
+
     /* Set some custom headers */
     httpd_resp_set_hdr(req, "Custom-Header-1", "Custom-Value-1");
     httpd_resp_set_hdr(req, "Custom-Header-2", "Custom-Value-2");
@@ -287,7 +291,7 @@ static esp_err_t echo_post_handler(httpd_req_t *req)
         ESP_LOGI(TAG, "%.*s", ret, buf);
         ESP_LOGI(TAG, "====================================");
     }
-
+    Show_Str(0,96,(u8 *)"/echo POST",16,0);
     // End response
     httpd_resp_send_chunk(req, NULL, 0);
     return ESP_OK;
@@ -297,7 +301,7 @@ static const httpd_uri_t echo = {
     .uri       = "/echo",
     .method    = HTTP_POST,
     .handler   = echo_post_handler,
-    .user_ctx  = NULL
+    .user_ctx  = "It is http_post /echo"
 };
 
 /* An HTTP_ANY handler */
@@ -306,8 +310,10 @@ static esp_err_t any_handler(httpd_req_t *req)
     /* Send response with body set as the
      * string passed in user context*/
     const char* resp_str = (const char*) req->user_ctx;
+    // const char * resp_str = echo.user_ctx;
     httpd_resp_send(req, resp_str, HTTPD_RESP_USE_STRLEN);
 
+     Show_Str(0,96,(u8 *)"/any ANY",16,0);
     // End response
     httpd_resp_send_chunk(req, NULL, 0);
     return ESP_OK;
@@ -321,7 +327,7 @@ static const httpd_uri_t any = {
     .handler   = any_handler,
     /* Let's pass response string in user
      * context to demonstrate it's usage */
-    .user_ctx  = "Hello World!"
+    .user_ctx  = "It is http any methode"
 };
 
 /* This handler allows the custom error handling functionality to be
@@ -382,6 +388,7 @@ static esp_err_t ctrl_put_handler(httpd_req_t *req)
         httpd_register_err_handler(req->handle, HTTPD_404_NOT_FOUND, NULL);
     }
 
+    Show_Str(0,96,(u8 *)"/ctrl PUT",16,0);
     /* Respond with empty body */
     httpd_resp_send(req, NULL, 0);
     return ESP_OK;
@@ -391,7 +398,7 @@ static const httpd_uri_t ctrl = {
     .uri       = "/ctrl",
     .method    = HTTP_PUT,
     .handler   = ctrl_put_handler,
-    .user_ctx  = NULL
+    .user_ctx  = "This post ctrl method"
 };
 
 static httpd_handle_t start_webserver(void)
@@ -433,6 +440,7 @@ static esp_err_t stop_webserver(httpd_handle_t server)
     return httpd_stop(server);
 }
 
+
 static void disconnect_handler(void* arg, esp_event_base_t event_base,
                                int32_t event_id, void* event_data)
 {
@@ -447,12 +455,35 @@ static void disconnect_handler(void* arg, esp_event_base_t event_base,
     }
 }
 
+// esp_netif_ip_info_t  ip_dat;
+
+
 static void connect_handler(void* arg, esp_event_base_t event_base,
                             int32_t event_id, void* event_data)
 {
     httpd_handle_t* server = (httpd_handle_t*) arg;
-    if (*server == NULL) {
-        ESP_LOGI(TAG, "Starting webserver");
+
+    if (*server == NULL) 
+    {
+      
+        // memcpy(&ip_dat,event_data,sizeof(esp_netif_ip_info_t));
+
+         ip_event_got_ip_t * ip_dat = (ip_event_got_ip_t *) event_data;
+
+        // printf("fjljflsjflsjfl\r\n");
+        // printf("ipv4 addr:");
+        // printf(IPSTR,IP2STR(&ip_dat->ip));
+
+        ESP_LOGI(TAG,"WIFI is conneted , ip4 addr:"IPSTR,IP2STR(&ip_dat->ip_info.ip));
+       // ESP_LOGI(TAG,IPSTR,IP2STR(&ip_dat->ip));
+      
+        u8 ip_str[24];
+
+        ESP_LOGI(TAG, "Starting webserver");     
+        sprintf((char *)ip_str,IPSTR,IP2STR(&ip_dat->ip_info.ip));
+        Show_Str(0,64,(u8*)"IPv4 addr:",16,1);  
+        Show_Str(0,80,(u8*)ip_str,16,0);     
+
         *server = start_webserver();
     }
 }
@@ -466,11 +497,23 @@ void app_main(void)
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-    /* This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
-     * Read "Establishing Wi-Fi or Ethernet Connection" section in
-     * examples/protocols/README.md for more information about this function.
-     */
-    ESP_ERROR_CHECK(example_connect());
+    LCD_Init();
+    LCD_Display_Dir(USE_LCM_DIR);
+    LCD_Clear(YELLOW);		//«Â∆¡	
+
+   // esp_rom_delay_us(10);
+    LCD_DisplayOn();
+    LCD_Clear(YELLOW);
+   // LCD_ShowChar(0,16,'A',16,1);
+   // Show_Str(0,0,(u8 *)"@jtNight14",16,1);
+
+    u16 lcd_id = LCD_Read_ID(0x04);
+    u8  buf[16] = {0};
+    printf("Chip ID=0X%x\r\n",lcd_id);
+    sprintf((char *)buf,"ID=0X%x\r\n",lcd_id);
+    Show_Str(0,16,buf,16,1);
+    printf("idf_version =%s\r\n",esp_get_idf_version());
+    Show_Str(0,32,esp_get_idf_version(),16,1);
 
     /* Register event handlers to stop the server when Wi-Fi or Ethernet is disconnected,
      * and re-start it upon connection.
@@ -486,11 +529,24 @@ void app_main(void)
 #endif // CONFIG_EXAMPLE_CONNECT_ETHERNET
 #endif // !CONFIG_IDF_TARGET_LINUX
 
-    /* Start the server for the first time */
-    server = start_webserver();
+    /* This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
+     * Read "Establishing Wi-Fi or Ethernet Connection" section in
+     * examples/protocols/README.md for more information about this function.
+     */
+    ESP_ERROR_CHECK(example_connect());
 
-    while (1) {
+    /* Start the server for the first time */
+   // server = start_webserver();
+
+    uint8_t str_ip[16];
+    u32 loop = 0;
+
+    while (1) 
+    {
         sleep(5);
-        printf("main loop-----\r\n");
+        printf("main loop-----\r\n");        
+        loop++;
+        sprintf((char *)str_ip,"loop= %u", loop);
+        Show_Str(0,48,str_ip,16,0);
     }
 }
