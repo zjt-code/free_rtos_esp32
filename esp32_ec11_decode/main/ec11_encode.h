@@ -5,10 +5,10 @@ typedef enum {
     K_STATE_NULL,
     K_STATE_A_DOWN,
     K_STATE_A_UP,
-    k_STATE_B_DOWN,
-    k_STATE_B_UP,
-    k_STATE_PRESS_DOWN,
-    k_STATE_PRESS_UP,
+    K_STATE_B_DOWN,
+    K_STATE_B_UP,
+    K_STATE_PRESS_DOWN,
+    K_STATE_PRESS_UP,
 }t_key_State;
 
 

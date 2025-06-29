@@ -55,18 +55,8 @@ void app_main(void)
     while (1)
     {
         /* code */
-        vTaskDelay(10 / portTICK_PERIOD_MS);
-        if(ec11_encode_get_changed())
-        {
-            if(EC11_CLOCKWISE ==ecll_encode_rot())
-            {
-                a++;
-            }else
-            {
-                b++;
-            }
-            printf("ec11_encode value=%lu,%lu\r\n",a,b);
-        }
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+       
         // printf("Restarting in %d seconds...\n" , i++);
 
     }
